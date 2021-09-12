@@ -29,12 +29,12 @@ public class OnkyoRemote extends JFrame {
 	
 	protected void refreshStatus(EiscpConnector connector) {
 		try {
-			connector.sendIscpCommand("PWRQSTN");
-			connector.sendIscpCommand("ZPWQSTN");
-			connector.sendIscpCommand("PW3QSTN");
-			connector.sendIscpCommand("SLIQSTN");
-			connector.sendIscpCommand("SLZQSTN");
-			connector.sendIscpCommand("SL3QSTN");
+			connector.sendIscpCommand("PWRQSTN"); // Ask for current power status
+			connector.sendIscpCommand("ZPWQSTN"); // Ask for Zone 2 power status
+			connector.sendIscpCommand("PW3QSTN"); // Ask for Zone 3 power status
+			connector.sendIscpCommand("SLIQSTN"); // Ask for current input
+			connector.sendIscpCommand("SLZQSTN"); // Ask for current Zone 2 input
+			connector.sendIscpCommand("SL3QSTN"); // Ask for current Zone 3 input
 		} catch (IOException e1) {
 			e1.printStackTrace();
 		}
