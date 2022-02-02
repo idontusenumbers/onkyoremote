@@ -7,7 +7,14 @@ import de.csmp.jeiscp.eiscp.Command;
 import de.csmp.jeiscp.eiscp.EiscpCommandsParser;
 
 import javax.swing.SwingUtilities;
-import java.awt.*;
+import java.awt.AWTException;
+import java.awt.CheckboxMenuItem;
+import java.awt.HeadlessException;
+import java.awt.Image;
+import java.awt.MenuItem;
+import java.awt.PopupMenu;
+import java.awt.SystemTray;
+import java.awt.TrayIcon;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
@@ -17,7 +24,6 @@ import java.util.List;
 import java.util.Map;
 
 public class MacOnkyoRemote extends OnkyoRemote {
-	private EiscpDevice device;
 	private Map<String, CheckboxMenuItem> inputMap;
 	final TrayIcon trayIcon;
 	final OsThemeDetector detector;
@@ -86,7 +92,7 @@ public class MacOnkyoRemote extends OnkyoRemote {
 		super.setConnector(connector);
 
 
-		device = connector.getDevice();
+		EiscpDevice device = connector.getDevice();
 		deviceCommandSets = device.getCapableEiscpParserModelsets();
 		inputMap = new HashMap<>();
 
@@ -195,7 +201,7 @@ public class MacOnkyoRemote extends OnkyoRemote {
 		}
 	}
 
-	public static void main(String[] args) throws Exception {
+	public static void main(String[] args) {
 
 		//Check the SystemTray is supported
 		if (!SystemTray.isSupported()) {
@@ -203,13 +209,32 @@ public class MacOnkyoRemote extends OnkyoRemote {
 			return;
 		}
 
+/*
+		// Hide Dock icon
+		// This flashes the dock icon for a moment so info.plist item is used instead
+		try {
+			final NSApplication nsApplication = NSApplication.sharedApplication();
+			final ID delegate = Foundation.invoke(ObjcToJava.toID(nsApplication), "setActivationPolicy:", ObjcToJava.toFoundationArgument(PROHIBITED));
+			final Boolean result = ObjcToJava.map(delegate, Boolean.class);
+			if (!result) {
+				System.err.println("Could not disable dock icon");
+			}
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
+*/
+
 
 		final MacOnkyoRemote macOnkyoRemote = new MacOnkyoRemote();
 
+
+
+		// TODO should be scheduled to run periodically to determine if device is no longer reachable
 		Thread t = new Thread(() -> {
-			EiscpConnector connector = null;
 			try {
-				connector = EiscpConnector.autodiscover();
+				// blocks
+				EiscpConnector connector = EiscpConnector.autodiscover();
+
 				macOnkyoRemote.setConnector(connector);
 			} catch (Exception e) {
 				e.printStackTrace();
