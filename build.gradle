@@ -1,0 +1,43 @@
+import io.github.fvarrui.javapackager.gradle.PackageTask
+
+repositories {
+    mavenCentral()
+    maven { url 'https://jitpack.io' }
+}
+
+buildscript {
+    repositories {
+        mavenCentral()
+        maven { url 'https://jitpack.io' }
+    }
+    dependencies {
+        classpath 'io.github.fvarrui:javapackager:1.6.2'
+    }
+}
+
+apply plugin: 'io.github.fvarrui.javapackager.plugin'
+apply plugin: 'java'
+
+dependencies {
+    implementation 'com.github.Dansoftowner:jSystemThemeDetector:3.8'
+    implementation 'com.github.idontusenumbers:jEISCP:4a564523fe'
+    implementation 'com.github.blackears:svgSalamander:v1.1.3'
+}
+
+task packageMyApp(type: PackageTask, dependsOn: build) {
+    // mandatory
+    mainClass = 'net.obive.onkyoremote.MacOnkyoRemote'
+    // optional
+    bundleJre = false
+    generateInstaller = false
+    administratorRequired = false
+    platform = 'mac'
+    macConfig {
+        appId = "net.obive.onkyoremote.OnkyoRemote"
+        icnsFile = file("src/main/resources/icon.icns")
+        generateDmg = false
+        generatePkg = false
+        relocateJar = true
+        version = "1.1"
+    }
+}

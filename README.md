@@ -6,7 +6,6 @@ This shows a menu in the menubar to control Onkyo and Integra receivers and prea
 # Dependencies
 OnkyoRemote depends on a few forked libraries:
 
-<https://github.com/idontusenumbers/appbundle-maven-plugin>
 <https://github.com/idontusenumbers/jEISCP>
 
 And a library-not-yet-in-maven:
@@ -18,6 +17,16 @@ You'll need to grab a copy of all those dependencies and install them to your lo
 Then run `mvn package`
 
 You should get a `.app` in the `target`
+
+
+
+```
+jpackage --input . --main-jar onkyoremote-1.1-jar-with-dependencies.jar
+```
+
+```
+build_dmg.sh
+```
 
 # License
 Due to dependence on jEISCP, this code is under [GPL v3](http://www.gnu.org/licenses/gpl-3.0.html) until further notice.

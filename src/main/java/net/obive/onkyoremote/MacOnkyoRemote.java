@@ -19,9 +19,72 @@ import java.util.Map;
 public class MacOnkyoRemote extends OnkyoRemote {
 	private EiscpDevice device;
 	private Map<String, CheckboxMenuItem> inputMap;
+	final TrayIcon trayIcon;
+	final OsThemeDetector detector;
 
-	public MacOnkyoRemote(EiscpConnector connector) throws HeadlessException {
-		super(connector);
+
+	public MacOnkyoRemote() throws HeadlessException {
+
+		trayIcon = new TrayIcon(new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB));
+
+		trayIcon.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mousePressed(MouseEvent e) {
+				System.out.println("press");
+			}
+		});
+
+
+		detector = OsThemeDetector.getDetector();
+		detector.registerListener(isDark -> {
+			SwingUtilities.invokeLater(() -> {
+				updateIcon(isDark);
+			});
+		});
+
+
+		final PopupMenu popup = new PopupMenu();
+
+
+		MenuItem info = new MenuItem("Waiting for discovery response...");
+		info.setEnabled(false);
+		popup.add(info);
+
+		addQuitItem(popup);
+		trayIcon.setPopupMenu(popup);
+		updateIcon();
+
+		try {
+			final SystemTray tray = SystemTray.getSystemTray();
+
+			tray.add(trayIcon);
+		} catch (AWTException e) {
+			System.out.println("TrayIcon could not be added.");
+		}
+	}
+	private void updateIcon() {
+		boolean dark;
+		try {
+			dark = detector.isDark();
+		} catch (Exception e) {
+			// catches bug caused by change introduced in monterey https://github.com/Dansoftowner/jSystemThemeDetector/issues/18
+			e.printStackTrace();
+			dark = false;
+		}
+		updateIcon(dark);
+	}
+	private void addQuitItem(PopupMenu popup) {
+		MenuItem quitItem = new MenuItem("Quit");
+		quitItem.addActionListener(status -> System.exit(0));
+		popup.addSeparator();
+		popup.add(quitItem);
+		popup.addActionListener(e -> System.out.println("popup action"));
+	}
+
+	@Override
+	public void setConnector(EiscpConnector connector) {
+		super.setConnector(connector);
+
 
 		device = connector.getDevice();
 		deviceCommandSets = device.getCapableEiscpParserModelsets();
@@ -37,9 +100,6 @@ public class MacOnkyoRemote extends OnkyoRemote {
 		final PopupMenu zone2 = new PopupMenu("Zone 2");
 		final PopupMenu zone3 = new PopupMenu("Zone 3");
 
-		final TrayIcon trayIcon =
-				new TrayIcon(new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB));
-		final SystemTray tray = SystemTray.getSystemTray();
 
 		MenuItem info = new MenuItem(device.getDeviceType());
 		info.setEnabled(false);
@@ -57,20 +117,9 @@ public class MacOnkyoRemote extends OnkyoRemote {
 		popup.add(zone2);
 		popup.add(zone3);
 
-		MenuItem quitItem = new MenuItem("Quit");
-		quitItem.addActionListener(status -> System.exit(0));
-		popup.addSeparator();
-
-		popup.add(quitItem);
-
-		popup.addActionListener(e -> System.out.println("popup action"));
+		addQuitItem(popup);
 		trayIcon.setPopupMenu(popup);
-		trayIcon.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mousePressed(MouseEvent e) {
-				System.out.println("press");
-			}
-		});
+
 
 		connector.addListener(message -> {
 			System.out.println(">>>" + message);
@@ -81,24 +130,10 @@ public class MacOnkyoRemote extends OnkyoRemote {
 				});
 			}
 		});
-
-		final OsThemeDetector detector = OsThemeDetector.getDetector();
-		detector.registerListener(isDark -> {
-			SwingUtilities.invokeLater(() -> {
-				updateIcon(trayIcon, isDark);
-			});
-		});
-		updateIcon(trayIcon, detector.isDark());
-
+		updateIcon();
 		refreshStatus(connector);
-
-		try {
-			tray.add(trayIcon);
-		} catch (AWTException e) {
-			System.out.println("TrayIcon could not be added.");
-		}
 	}
-	private void updateIcon(TrayIcon trayIcon, Boolean isDark) {
+	private void updateIcon(Boolean isDark) {
 		Image icon = getIcon(isDark ? "white" : "black");
 		trayIcon.setImage(icon);
 	}
@@ -168,8 +203,18 @@ public class MacOnkyoRemote extends OnkyoRemote {
 			return;
 		}
 
-		EiscpConnector connector = EiscpConnector.autodiscover();
 
-		new MacOnkyoRemote(connector);
+		final MacOnkyoRemote macOnkyoRemote = new MacOnkyoRemote();
+
+		Thread t = new Thread(() -> {
+			EiscpConnector connector = null;
+			try {
+				connector = EiscpConnector.autodiscover();
+				macOnkyoRemote.setConnector(connector);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		});
+		t.start();
 	}
 }

@@ -19,14 +19,11 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class OnkyoRemote extends JFrame {
+public abstract class OnkyoRemote extends JFrame {
 	protected EiscpConnector connector;
 	protected List<String> deviceCommandSets;
-	
-	public OnkyoRemote(EiscpConnector connector) {
-		this.connector = connector;
-	}
-	
+
+
 	protected void refreshStatus(EiscpConnector connector) {
 		try {
 			connector.sendIscpCommand("PWRQSTN"); // Ask for current power status
@@ -39,7 +36,7 @@ public class OnkyoRemote extends JFrame {
 			e1.printStackTrace();
 		}
 	}
-	
+
 	protected List<Command> getInputCommands(CommandBlock inputCommandBlock) {
 		return inputCommandBlock.getValues().stream()
 				.filter(c -> deviceCommandSets.contains(c.getModels()))
@@ -47,7 +44,7 @@ public class OnkyoRemote extends JFrame {
 				.sorted(Comparator.comparing(this::getInputName))
 				.collect(Collectors.toList());
 	}
-	
+
 	protected void sendCommand(String iscpCommand) {
 		try {
 			connector.sendIscpCommand(iscpCommand);
@@ -55,16 +52,16 @@ public class OnkyoRemote extends JFrame {
 			e1.printStackTrace();
 		}
 	}
-	
+
 	protected String getInputName(Command command) {
 		return command.getDescription().substring(command.getDescription().lastIndexOf(" "));
 	}
-	
-	
+
+
 	protected Image getIcon(String color) {
 		BufferedImage result = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
 		try {
-			
+
 			SVGUniverse u = new SVGUniverse();
 			URL icon = getClass().getResource("/icon.svg");
 			u.loadSVG(icon);
@@ -80,15 +77,23 @@ public class OnkyoRemote extends JFrame {
 				}
 			});
 			diagram.render(g2);
+
+			if (connector == null) {
+				g2.setFont(g2.getFont().deriveFont(Font.BOLD, 20f));
+				g2.setColor(color.equals("white") ? Color.WHITE : Color.BLACK);
+				g2.drawString("?", 3, 15);
+			}
 			g2.dispose();
-			
 		} catch (URISyntaxException e) {
 			e.printStackTrace();
 		} catch (SVGException e) {
 			e.printStackTrace();
 		}
-		
+
 		return result;
 	}
-	
+
+	public void setConnector(EiscpConnector connector) {
+		this.connector = connector;
+	}
 }
